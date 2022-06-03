@@ -60,7 +60,7 @@ In this sample, search users with these criteria:
 - GET: retrieve a representation of the resource
 - POST: create a new resource
 - PUT: update the resource
-- PATCH: perform a partial update of a resource, refer to [service](https://github.com/core-go/service) and [mongo](https://github.com/core-go/mongo)  
+- PATCH: perform a partial update of a resource, refer to [service](https://github.com/core-go/service) and [sql](https://github.com/core-go/sql)  
 - DELETE: delete a resource
 
 ## API design for health check
@@ -71,7 +71,7 @@ To check if the service is available.
 {
     "status": "UP",
     "details": {
-        "mongo": {
+        "sql": {
             "status": "UP"
         }
     }
@@ -130,9 +130,46 @@ GET /users/wolverine
     "dateOfBirth": "1974-11-16T16:59:59.999Z"
 }
 ```
-#### *Response:* 1: success, 0: duplicate key, -1: error
+#### *Response:*
+- status: configurable; 1: success, 0: duplicate key, 4: error
 ```json
-1
+{
+    "status": 1,
+    "value": {
+        "id": "wolverine",
+        "username": "james.howlett",
+        "email": "james.howlett@gmail.com",
+        "phone": "0987654321",
+        "dateOfBirth": "1974-11-16T00:00:00+07:00"
+    }
+}
+```
+#### *Fail case sample:* 
+- Request:
+```json
+{
+    "id": "wolverine",
+    "username": "james.howlett",
+    "email": "james.howlett",
+    "phone": "0987654321a",
+    "dateOfBirth": "1974-11-16T16:59:59.999Z"
+}
+```
+- Response: in this below sample, email and phone are not valid
+```json
+{
+    "status": 4,
+    "errors": [
+        {
+            "field": "email",
+            "code": "email"
+        },
+        {
+            "field": "phone",
+            "code": "phone"
+        }
+    ]
+}
 ```
 
 ### Update one user by id
@@ -148,9 +185,19 @@ PUT /users/wolverine
     "dateOfBirth": "1974-11-16T16:59:59.999Z"
 }
 ```
-#### *Response:* 1: success, 0: not found, -1: error
+#### *Response:*
+- status: configurable; 1: success, 0: duplicate key, 2: version error, 4: error
 ```json
-1
+{
+    "status": 1,
+    "value": {
+        "id": "wolverine",
+        "username": "james.howlett",
+        "email": "james.howlett@gmail.com",
+        "phone": "0987654321",
+        "dateOfBirth": "1974-11-16T00:00:00+07:00"
+    }
+}
 ```
 
 ### Patch one user by id
@@ -165,9 +212,16 @@ PATCH /users/wolverine
     "phone": "0987654321"
 }
 ```
-#### *Response:* 1: success, 0: not found, -1: error
+#### *Response:*
+- status: configurable; 1: success, 0: duplicate key, 2: version error, 4: error
 ```json
-1
+{
+    "status": 1,
+    "value": {
+        "email": "james.howlett@gmail.com",
+        "phone": "0987654321"
+    }
+}
 ```
 
 #### Problems for patch
@@ -180,7 +234,7 @@ type UserService interface {
 ```
 We must solve 2 problems:
 1. At http handler layer, we must convert the user struct to map, with json format, and make sure the nested data types are passed correctly.
-2. At repository layer, from json format, we must convert the json format to database format (in this case, we must convert to bson of Mongo)
+2. At repository layer, from json format, we must convert the json format to database column name
 
 #### Solutions for patch  
 At http handler layer, we use [core-go/service](https://github.com/core-go/service), to convert the user struct to map, to make sure we just update the fields we need to update
@@ -291,7 +345,7 @@ func main() {
 
     log.Initialize(conf.Log)
     r.Use(m.BuildContext)
-    logger := m.NewStructuredLogger()
+    logger := m.NewLogger()
     r.Use(m.Logger(conf.MiddleWare, log.InfoFields, logger))
     r.Use(m.Recover(log.ErrorMsg))
 }

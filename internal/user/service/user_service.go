@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	q "github.com/core-go/sql"
 
 	. "go-service/internal/user/domain"
 	. "go-service/internal/user/port"
@@ -29,70 +30,37 @@ func (s *userService) Load(ctx context.Context, id string) (*User, error) {
 	return s.repository.Load(ctx, id)
 }
 func (s *userService) Create(ctx context.Context, user *User) (int64, error) {
-	tx, err := s.db.Begin()
+	ctx, tx, err := q.Begin(ctx, s.db)
 	if err != nil {
-		return -1, nil
+		return  -1, err
 	}
-	ctx = context.WithValue(ctx, "tx", tx)
 	res, err := s.repository.Create(ctx, user)
-	if err != nil {
-		er := tx.Rollback()
-		if er != nil {
-			return -1, er
-		}
-		return -1, err
-	}
-	err = tx.Commit()
-	return res, err
+	return q.End(tx, res, err)
 }
 func (s *userService) Update(ctx context.Context, user *User) (int64, error) {
-	tx, err := s.db.Begin()
+	ctx, tx, err := q.Begin(ctx, s.db)
 	if err != nil {
-		return -1, nil
+		return  -1, err
 	}
-	ctx = context.WithValue(ctx, "tx", tx)
 	res, err := s.repository.Update(ctx, user)
-	if err != nil {
-		er := tx.Rollback()
-		if er != nil {
-			return -1, er
-		}
-		return -1, err
-	}
-	err = tx.Commit()
+	err = q.Commit(tx, err)
 	return res, err
 }
 func (s *userService) Patch(ctx context.Context, user map[string]interface{}) (int64, error) {
-	tx, err := s.db.Begin()
+	ctx, tx, err := q.Begin(ctx, s.db)
 	if err != nil {
-		return -1, nil
+		return  -1, err
 	}
-	ctx = context.WithValue(ctx, "tx", tx)
 	res, err := s.repository.Patch(ctx, user)
-	if err != nil {
-		er := tx.Rollback()
-		if er != nil {
-			return -1, er
-		}
-		return -1, err
-	}
-	err = tx.Commit()
+	err = q.Commit(tx, err)
 	return res, err
 }
 func (s *userService) Delete(ctx context.Context, id string) (int64, error) {
-	tx, err := s.db.Begin()
+	ctx, tx, err := q.Begin(ctx, s.db)
 	if err != nil {
-		return -1, nil
+		return  -1, err
 	}
-	ctx = context.WithValue(ctx, "tx", tx)
 	res, err := s.repository.Delete(ctx, id)
-	if err != nil {
-		er := tx.Rollback()
-		if er != nil {
-			return -1, er
-		}
-		return -1, err
-	}
-	err = tx.Commit()
+	err = q.Commit(tx, err)
 	return res, err
 }
