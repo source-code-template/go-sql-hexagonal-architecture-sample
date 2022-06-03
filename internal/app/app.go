@@ -35,7 +35,7 @@ func NewApp(ctx context.Context, conf Config) (*ApplicationContext, error) {
 		return nil, err
 	}
 	userRepository := repository.NewUserAdapter(db)
-	userService := service.NewUserService(userRepository)
+	userService := service.NewUserService(db, userRepository)
 	userHandler := handler.NewUserHandler(userSearchBuilder.Search, userService, logError)
 
 	sqlChecker := q.NewHealthChecker(db)

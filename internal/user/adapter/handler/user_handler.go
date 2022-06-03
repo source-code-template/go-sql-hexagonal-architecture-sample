@@ -6,10 +6,11 @@ import (
 	"github.com/core-go/search"
 	sv "github.com/core-go/service"
 	"github.com/gorilla/mux"
-	"go-service/internal/user/domain"
-	"go-service/internal/user/service"
 	"net/http"
 	"reflect"
+
+	"go-service/internal/user/domain"
+	"go-service/internal/user/service"
 )
 
 func NewUserHandler(find func(context.Context, interface{}, interface{}, int64, ...int64) (int64, string, error), service service.UserService, logError func(context.Context, string)) *HttpUserHandler {

@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go-service/internal/user/domain"
 	"io/ioutil"
 	"net/http"
+
+	"go-service/internal/user/domain"
 )
 
 type UserClient struct {

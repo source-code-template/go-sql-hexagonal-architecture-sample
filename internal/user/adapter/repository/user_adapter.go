@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"go-service/internal/user/domain"
 	"strings"
+
+	"go-service/internal/user/domain"
 )
 
 func NewUserAdapter(db *sql.DB) *UserAdapter {
@@ -25,38 +26,42 @@ func (r *UserAdapter) Load(ctx context.Context, id string) (*domain.User, error)
 	defer rows.Close()
 	for rows.Next() {
 		var user domain.User
-		err = rows.Scan(&user.Id, &user.Username, &user.Phone, &user.Email, &user.DateOfBirth)
+		err = rows.Scan(
+			&user.Id,
+			&user.Username,
+			&user.Phone,
+			&user.Email,
+			&user.DateOfBirth)
 		return &user, nil
 	}
 	return nil, nil
 }
-
 func (r *UserAdapter) Create(ctx context.Context, user *domain.User) (int64, error) {
 	query := "insert into users (id, username, email, phone, date_of_birth) values (?, ?, ?, ?, ?)"
-	stmt, er0 := r.DB.Prepare(query)
-	if er0 != nil {
-		return -1, nil
+	tx := GetTx(ctx)
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		return -1, err
 	}
-	res, er1 := stmt.ExecContext(ctx, user.Id, user.Username, user.Email, user.Phone, user.DateOfBirth)
-	if er1 != nil {
-		return -1, nil
+	res, err := stmt.ExecContext(ctx, user.Id, user.Username, user.Email, user.Phone, user.DateOfBirth)
+	if err != nil {
+		return -1, err
 	}
 	return res.RowsAffected()
 }
-
 func (r *UserAdapter) Update(ctx context.Context, user *domain.User) (int64, error) {
 	query := "update users set username = ?, email = ?, phone = ?, date_of_birth = ? where id = ?"
-	stmt, er0 := r.DB.Prepare(query)
-	if er0 != nil {
-		return -1, nil
+	tx := GetTx(ctx)
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		return -1, err
 	}
-	res, er1 := stmt.ExecContext(ctx, user.Username, user.Email, user.Phone, user.DateOfBirth, user.Id)
-	if er1 != nil {
-		return -1, er1
+	res, err := stmt.ExecContext(ctx, user.Username, user.Email, user.Phone, user.DateOfBirth, user.Id)
+	if err != nil {
+		return -1, err
 	}
 	return res.RowsAffected()
 }
-
 func (r *UserAdapter) Patch(ctx context.Context, user map[string]interface{}) (int64, error) {
 	updateClause := "update users set"
 	whereClause := fmt.Sprintf("where id='%s'", user["id"])
@@ -74,27 +79,38 @@ func (r *UserAdapter) Patch(ctx context.Context, user map[string]interface{}) (i
 		msg := fmt.Sprintf("phone='%s'", fmt.Sprint(user["phone"]))
 		setClause = append(setClause, msg)
 	}
-
 	setClauseRes := strings.Join(setClause, ",")
 	querySlice := []string{updateClause, setClauseRes, whereClause}
 	query := strings.Join(querySlice, " ")
 
-	res, err := r.DB.ExecContext(ctx, query)
+	tx := GetTx(ctx)
+	res, err := tx.ExecContext(ctx, query)
+	if err != nil {
+		return -1, err
+	}
+	return res.RowsAffected()
+}
+func (r *UserAdapter) Delete(ctx context.Context, id string) (int64, error) {
+	query := "delete from users where id = ?"
+	tx := GetTx(ctx)
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		return -1, err
+	}
+	res, err := stmt.ExecContext(ctx, id)
 	if err != nil {
 		return -1, err
 	}
 	return res.RowsAffected()
 }
 
-func (r *UserAdapter) Delete(ctx context.Context, id string) (int64, error) {
-	query := "delete from users where id = ?"
-	stmt, er0 := r.DB.Prepare(query)
-	if er0 != nil {
-		return -1, nil
+func GetTx(ctx context.Context) *sql.Tx {
+	t := ctx.Value("tx")
+	if t != nil {
+		tx, ok := t.(*sql.Tx)
+		if ok {
+			return tx
+		}
 	}
-	res, er1 := stmt.ExecContext(ctx, id)
-	if er1 != nil {
-		return -1, er1
-	}
-	return res.RowsAffected()
+	return nil
 }
