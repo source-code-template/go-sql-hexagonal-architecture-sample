@@ -24,7 +24,14 @@ type UserAdapter struct {
 
 func (r *UserAdapter) Load(ctx context.Context, id string) (*User, error) {
 	var users []User
-	query := fmt.Sprintf("select id, username, email, phone, date_of_birth from users where id = %s limit 1", q.BuildParam(1))
+	query := fmt.Sprintf(`
+		select
+			id,
+			username,
+			email,
+			phone,
+			date_of_birth
+		from users where id = %s limit 1`, q.BuildParam(1))
 	err := q.Select(ctx, r.DB, &users, query, id)
 	if err != nil {
 		return nil, err

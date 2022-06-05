@@ -5,6 +5,260 @@
 go run main.go
 ```
 
+## How to make source code cleaner
+- This repository is forked from https://github.com/go-tutorials/go-sql-hexagonal-architecture-sample
+- The original repository is written at GO SDK level. It mean we develop the micro service, using GO SDK, without any utility
+
+### How to make sql database adapter cleaner
+#### Query data
+<table><thead><tr><td>
+
+[GO SDK Only](https://github.com/go-tutorials/go-sql-hexagonal-architecture-sample/blob/main/internal/user/adapter/repository/user_adapter.go)
+</td><td>
+
+[GO SDK with utilities](https://github.com/source-code-template/go-sql-hexagonal-architecture-sample/blob/main/internal/user/adapter/repository/user_adapter.go)
+</td></tr></thead><tbody><tr><td>
+
+```go
+func (r *UserAdapter) Load(ctx context.Context, id string) (*domain.User, error) {
+	query := `
+		select
+			id, 
+			username,
+			email,
+			phone,
+			date_of_birth
+		from users where id = ?`
+	rows, err := r.DB.QueryContext(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var user domain.User
+		err = rows.Scan(
+			&user.Id,
+			&user.Username,
+			&user.Phone,
+			&user.Email,
+			&user.DateOfBirth)
+		return &user, nil
+	}
+	return nil, nil
+}
+```
+</td>
+<td>
+
+```go
+import 	q "github.com/core-go/sql"
+
+func (r *UserAdapter) Load(ctx context.Context, id string) (*User, error) {
+	var users []User
+	query := fmt.Sprintf(`
+		select
+			id,
+			username,
+			email,
+			phone,
+			date_of_birth
+		from users where id = %s limit 1`, q.BuildParam(1))
+	err := q.Select(ctx, r.DB, &users, query, id)
+	if err != nil {
+		return nil, err
+	}
+	if len(users) > 0 {
+		return &users[0], nil
+	}
+	return nil, nil
+}
+```
+</td></tr></tbody></table>
+
+#### Execute query
+<table><thead><tr><td>
+
+[GO SDK Only](https://github.com/go-tutorials/go-sql-hexagonal-architecture-sample/blob/main/internal/user/adapter/repository/user_adapter.go)
+</td><td>
+
+[GO SDK with utilities](https://github.com/source-code-template/go-sql-hexagonal-architecture-sample/blob/main/internal/user/adapter/repository/user_adapter.go)
+</td></tr></thead><tbody><tr><td>
+
+```go
+func (r *UserAdapter) Create(ctx context.Context, user *domain.User) (int64, error) {
+	query := `
+		insert into users (
+			id,
+			username,
+			email,
+			phone,
+			date_of_birth)
+		values (
+			?,
+			?,
+			?, 
+			?,
+			?)`
+	tx := GetTx(ctx)
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		return -1, err
+	}
+	res, err := stmt.ExecContext(ctx,
+		user.Id,
+		user.Username,
+		user.Email,
+		user.Phone,
+		user.DateOfBirth)
+	if err != nil {
+		return -1, err
+	}
+	return res.RowsAffected()
+}
+```
+</td>
+<td>
+
+```go
+import 	q "github.com/core-go/sql"
+
+func (r *UserAdapter) Create(ctx context.Context, user *User) (int64, error) {
+	query, args := q.BuildToInsert("users", user, q.BuildParam)
+	tx := q.GetTx(ctx)
+	res, err := tx.ExecContext(ctx, query, args...)
+	return q.RowsAffected(res, err)
+}
+```
+</td></tr></tbody></table>
+
+### How to make service cleaner
+<table><thead><tr><td>
+
+[GO SDK Only](https://github.com/go-tutorials/go-sql-hexagonal-architecture-sample/blob/main/internal/user/service/user_service.go)
+</td><td>
+
+[GO SDK with utilities](https://github.com/source-code-template/go-sql-hexagonal-architecture-sample/blob/main/internal/user/service/user_service.go)
+</td></tr></thead><tbody><tr><td>
+
+```go
+func (s *userService) Create(ctx context.Context, user *User) (int64, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return -1, nil
+	}
+	ctx = context.WithValue(ctx, "tx", tx)
+	res, err := s.repository.Create(ctx, user)
+	if err != nil {
+		er := tx.Rollback()
+		if er != nil {
+			return -1, er
+		}
+		return -1, err
+	}
+	err = tx.Commit()
+	return res, err
+}
+```
+</td>
+<td>
+
+```go
+func (s *userService) Create(ctx context.Context, user *User) (int64, error) {
+	ctx, tx, err := q.Begin(ctx, s.db)
+	if err != nil {
+		return  -1, err
+	}
+	res, err := s.repository.Create(ctx, user)
+	return q.End(tx, res, err)
+}
+```
+</td></tr></tbody></table>
+
+### How to make http handler cleaner
+#### Get data
+<table><thead><tr><td>
+
+[GO SDK and Mux](https://github.com/go-tutorials/go-sql-hexagonal-architecture-sample/blob/main/internal/user/adapter/handler/user_handler.go)
+</td><td>
+
+[GO SDK with utilities and data validation](https://github.com/source-code-template/go-sql-hexagonal-architecture-sample/blob/main/internal/user/adapter/handler/user_handler.go)
+</td></tr></thead><tbody><tr><td>
+
+```go
+func (h *HttpUserHandler) Load(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	if len(id) == 0 {
+		http.Error(w, "Id cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.service.Load(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	JSON(w, http.StatusOK, user)
+}
+```
+</td>
+<td>
+
+```go
+func (h *HttpUserHandler) Load(w http.ResponseWriter, r *http.Request) {
+	id := sv.GetRequiredParam(w, r)
+	if len(id) > 0 {
+		res, err := h.service.Load(r.Context(), id)
+		sv.RespondModel(w, r, res, err, h.Error, nil)
+	}
+}
+```
+</td></tr></tbody></table>
+
+#### Create data 
+<table><thead><tr><td>
+
+[GO SDK and Mux without data validation](https://github.com/go-tutorials/go-sql-hexagonal-architecture-sample/blob/main/internal/user/adapter/handler/user_handler.go)
+</td><td>
+
+[GO SDK with utilities and data validation](https://github.com/source-code-template/go-sql-hexagonal-architecture-sample/blob/main/internal/user/adapter/handler/user_handler.go)
+</td></tr></thead><tbody><tr><td>
+
+```go
+func (h *HttpUserHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var user User
+	er1 := json.NewDecoder(r.Body).Decode(&user)
+	defer r.Body.Close()
+	if er1 != nil {
+		http.Error(w, er1.Error(), http.StatusBadRequest)
+		return
+	}
+
+	res, er2 := h.service.Create(r.Context(), &user)
+	if er2 != nil {
+		http.Error(w, er1.Error(), http.StatusInternalServerError)
+		return
+	}
+	JSON(w, http.StatusCreated, res)
+}
+```
+</td>
+<td>
+
+```go
+func (h *HttpUserHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var user User
+	er1 := sv.Decode(w, r, &user)
+	if er1 == nil {
+		errors, er2 := h.Validate(r.Context(), &user)
+		if !sv.HasError(w, r, errors, er2, *h.Status.ValidationError, h.Error, h.Log, h.Resource, h.Action.Create) {
+			res, er3 := h.service.Create(r.Context(), &user)
+			sv.AfterCreated(w, r, &user, res, er3, h.Status, h.Error, h.Log, h.Resource, h.Action.Create)
+		}
+	}
+}
+```
+</td></tr></tbody></table>
+
 #### [core-go/search](https://github.com/core-go/search)
 - Build the search model at http handler
 - Build dynamic SQL for search
