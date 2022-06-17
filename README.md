@@ -12,6 +12,10 @@ go run main.go
 When you zoom one micro service, the flow is as below
 ![A typical micro service](https://camo.githubusercontent.com/00ab9dde746fd17a0bdad0412771cf63d4baeee2555309cb8bfab313a60af337/68747470733a2f2f63646e2d696d616765732d312e6d656469756d2e636f6d2f6d61782f3830302f312a79346b72615076544a34732d6c65334855696b3776512e706e67)
 
+### Hexagonal Architecture
+You can see many useful libraries of core-go for Hexagonal Architecture 
+![Hexagonal Architecture](https://camo.githubusercontent.com/75f0d073436f60955f94bb9f8075cb7a1b5a28b446a517a1acbb963ffe48b6d4/68747470733a2f2f63646e2d696d616765732d312e6d656469756d2e636f6d2f6d61782f3830302f312a5443765a6d4a786256686a6e535173666646494132512e706e67)
+
 ## How to make source code cleaner
 - This repository is forked from https://github.com/go-tutorials/go-sql-hexagonal-architecture-sample
 - The original repository is written at GO SDK level. It mean we develop the micro service, using GO SDK, without any utility
