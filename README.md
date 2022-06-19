@@ -1,4 +1,4 @@
-# go-sql-layer-architecture-sample
+# Hexagonal Architecture Sample
 
 #### To run the application
 ```shell
