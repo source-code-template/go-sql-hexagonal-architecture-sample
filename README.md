@@ -14,7 +14,7 @@ When you zoom one micro service, the flow is as below
 
 ### Hexagonal Architecture
 You can see many useful libraries of core-go for Hexagonal Architecture 
-![Hexagonal Architecture](https://camo.githubusercontent.com/75f0d073436f60955f94bb9f8075cb7a1b5a28b446a517a1acbb963ffe48b6d4/68747470733a2f2f63646e2d696d616765732d312e6d656469756d2e636f6d2f6d61782f3830302f312a5443765a6d4a786256686a6e535173666646494132512e706e67)
+![Hexagonal Architecture](https://camo.githubusercontent.com/f269cbeebcc31cc4adf5d6080a29d776b0f2e5293a8f1f1e5a73b7b835a5291c/68747470733a2f2f63646e2d696d616765732d312e6d656469756d2e636f6d2f6d61782f3830302f312a446d6635374f32466b6278366b7465617135525655772e706e67)
 
 ## How to make source code cleaner
 - This repository is forked from https://github.com/go-tutorials/go-sql-hexagonal-architecture-sample
