@@ -11,7 +11,7 @@ import (
 	. "go-service/internal/user/service"
 )
 
-func NewUserHandler(find func(context.Context, interface{}, interface{}, int64, ...int64) (int64, string, error), service UserService, status sv.StatusConfig, logError func(context.Context, string), validate func(context.Context, interface{}) ([]sv.ErrorMessage, error), action *sv.ActionConfig) *HttpUserHandler {
+func NewUserHandler(find func(context.Context, interface{}, interface{}, int64, ...int64) (int64, string, error), service UserService, status sv.StatusConfig, logError func(context.Context, string,...map[string]interface{}), validate func(context.Context, interface{}) ([]sv.ErrorMessage, error), action *sv.ActionConfig) *HttpUserHandler {
 	filterType := reflect.TypeOf(UserFilter{})
 	modelType := reflect.TypeOf(User{})
 	params := sv.CreateParams(modelType, &status, logError, validate, action)
