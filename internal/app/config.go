@@ -1,19 +1,19 @@
 package app
 
 import (
+	"github.com/core-go/core"
+	"github.com/core-go/core/client"
 	"github.com/core-go/log"
 	mid "github.com/core-go/log/middleware"
-	sv "github.com/core-go/service"
-	"github.com/core-go/service/client"
 	"github.com/core-go/sql"
 )
 
 type Config struct {
-	Server     sv.ServerConf    `mapstructure:"server"`
+	Server     core.ServerConf    `mapstructure:"server"`
 	Sql        sql.Config       `mapstructure:"sql"`
 	Client     client.ClientConfig `mapstructure:"client"`
 	Log        log.Config       `mapstructure:"log"`
 	MiddleWare mid.LogConfig    `mapstructure:"middleware"`
-	Status     *sv.StatusConfig `mapstructure:"status"`
-	Action     *sv.ActionConfig `mapstructure:"action"`
+	Status     *core.StatusConfig `mapstructure:"status"`
+	Action     *core.ActionConfig `mapstructure:"action"`
 }

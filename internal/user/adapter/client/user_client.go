@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/core-go/service/client"
+	"github.com/core-go/core/client"
 	"net/http"
 
 	. "go-service/internal/user/domain"
