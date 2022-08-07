@@ -1,5 +1,5 @@
 server:
-  name: go-sql-layer-architecture-sample
+  name: go-sql-hexagonal-architecture-sample
   port: 8080
 
 sql:
@@ -22,7 +22,7 @@ middleware:
 client:
   endpoint:
     url: "http://localhost:8080/users"
-    timeout: 1s
+    timeout: 10s
   log:
     log: true
     size: size
