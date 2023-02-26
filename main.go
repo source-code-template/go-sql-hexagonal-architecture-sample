@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"github.com/core-go/config"
 	"github.com/core-go/core"
-	"github.com/core-go/log"
 	mid "github.com/core-go/log/middleware"
+	"github.com/core-go/log/zap"
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 
 	"go-service/internal/app"
 )

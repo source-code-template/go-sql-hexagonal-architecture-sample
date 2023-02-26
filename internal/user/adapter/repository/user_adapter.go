@@ -31,7 +31,7 @@ func (r *UserAdapter) Load(ctx context.Context, id string) (*User, error) {
 			email,
 			phone,
 			date_of_birth
-		from users where id = %s limit 1`, q.BuildParam(1))
+		from users where id = %s limit 1`, q.BuildDollarParam(1))
 	err := q.Select(ctx, r.DB, &users, query, id)
 	if err != nil {
 		return nil, err
@@ -42,20 +42,20 @@ func (r *UserAdapter) Load(ctx context.Context, id string) (*User, error) {
 	return nil, nil
 }
 func (r *UserAdapter) Create(ctx context.Context, user *User) (int64, error) {
-	query, args := q.BuildToInsert("users", user, q.BuildParam)
+	query, args := q.BuildToInsert("users", user, q.BuildDollarParam)
 	tx := q.GetTx(ctx)
 	res, err := tx.ExecContext(ctx, query, args...)
 	return RowsAffected(res, err)
 }
 func (r *UserAdapter) Update(ctx context.Context, user *User) (int64, error) {
 	tx := q.GetTx(ctx)
-	query, args := q.BuildToUpdate("users", user, q.BuildParam)
+	query, args := q.BuildToUpdate("users", user, q.BuildDollarParam)
 	res, err := tx.ExecContext(ctx, query, args...)
 	return RowsAffected(res, err)
 }
 func (r *UserAdapter) Patch(ctx context.Context, user map[string]interface{}) (int64, error) {
 	colMap := q.JSONToColumns(user, r.jsonColumnMap)
-	query, args := q.BuildToPatch("users", colMap, r.keys, q.BuildParam)
+	query, args := q.BuildToPatch("users", colMap, r.keys, q.BuildDollarParam)
 	tx := q.GetTx(ctx)
 	res, err := tx.ExecContext(ctx, query, args...)
 	return RowsAffected(res, err)
